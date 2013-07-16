@@ -5,41 +5,33 @@ Bot::Bot(void)
 {
 	stop = false;
 	isRunning = false;
-	Logger::log("Starting bot");
+
 	this->lolProps.hwnd = FindWindow(L"ApolloRuntimeContentWindow", NULL);
 	if(!this->lolProps.hwnd) {
 		MessageBox(NULL, L"Couldn't find LoL Window.", L"Damn!", NULL);
 		PostQuitMessage(0);
-	} else {
-		Logger::log("Found LoL HWND.");
 	}
 
 	this->_dc = GetDC(NULL);
 	if(!this->_dc) {
 		MessageBox(NULL, L"Couldn't find DC.", L"Damn!", NULL);
 		PostQuitMessage(0);
-	} else {
-		Logger::log("Found DC.");
 	}
 
 	this->lolProps.dc = GetDC(this->lolProps.hwnd);
 	if(!this->lolProps.dc) {
 		MessageBox(NULL, L"Couldn't find LoL DC.", L"Damn!", NULL);
 		PostQuitMessage(0);
-	} else {
-		Logger::log("Found LoL DC.");
 	}
 
 	winActivate(this->lolProps.hwnd);
 	getWindowProps(lolProps);
 	this->buildTargets();
 
-	Logger::log("Targets are in memory!");
 	currentStep = 1;
 	doStepOne = true;
 	doStepTwo = true;
 	doStepThree = true;
-	//startThread();
 }
 
 void Bot::buildTargets() {
@@ -71,12 +63,13 @@ bool Bot::doCallRole() {
 		this->processChanges();
 		moveAndClick(chat.screen);
 		moveAndClick(chat.screen);
-		say(message, TRUE);
-
+		SendText(message);
+		sayEnter();
 		while(!searchForPixelColor(lolProps.dc, chatRect, 2, 2, RGB(203, 254, 0), RGB(0, 194, 243), RGB(254, 254, 254))) {
 			Sleep(1);
 		}
-		say(message, TRUE);
+		SendText(message);
+		sayEnter();
 
 		return true;
 	}
@@ -95,7 +88,7 @@ bool Bot::doPickChampion() {
 	winActivate(lolProps.hwnd);
 	moveAndClick(search.screen);
 	moveAndClick(search.screen);
-	say(champion, FALSE);
+	SendText(champion);
 	moveAndClick(select.screen);
 	return true;
 }
@@ -116,23 +109,29 @@ DWORD Bot::startThread() {
 		DWORD ThreadID;
 		CreateThread(NULL, 0, BotThread, (void*) this, 0, &ThreadID);
 		return ThreadID;
+	} else {
+		Logger::log("[BOT][!] Already running. Press stop.");
 	}
 	return 0;
 }
 
 DWORD Bot::threadProxy() {
+	Logger::attachConsole();
 	isRunning = true;
+
 	if(doStepThree && currentStep != 3) { currentStep = 3; }
 	if(doStepTwo && currentStep != 2) { currentStep = 2; }
 	if(doStepOne && currentStep != 1) { currentStep = 1; }
 
+	Logger::log("[BOT] Configuration:");
+	printf("- Champion: %s\n- Message: %s\n- Auto accept game: %s\n- Call role: %s\n- Pick champion: %s\n", champion, message, (doStepOne)?"yes":"no", (doStepTwo)?"yes":"no", (doStepThree)?"yes":"no");
+	Logger::log("[BOT] running.");
 	if(doStepOne && currentStep == 1) {
-		Logger::log("[BOT] Step 1 - auto-accept game.");
+		Logger::log("[BOT] Step 1 - auto accept game.");
 		while(!this->doAcceptGame()) {
 			Sleep(1);
 			if(stop) {
-				currentStep = 0;
-				isRunning = false;
+				this->cleanUp();
 				return 0;
 			}
 		}
@@ -148,8 +147,7 @@ DWORD Bot::threadProxy() {
 		while(!this->doCallRole()) {
 			Sleep(1);
 			if(stop) {
-				currentStep = 0;
-				isRunning = false;
+				this->cleanUp();
 				return 0;
 			}
 		}
@@ -165,13 +163,11 @@ DWORD Bot::threadProxy() {
 		while(!this->doPickChampion()) {
 			Sleep(1);
 			if(stop) {
-				currentStep = 0;
-				isRunning = false;
+				this->cleanUp();
 				return 0;
 			}
 		}
-		currentStep = 0;
-		isRunning = false;
+		this->cleanUp();
 	}
 	return 0;
 }
@@ -186,6 +182,16 @@ void Bot::setChampion(char* champ) {
 }
 void Bot::setMessage(char* msg) {
 	message = msg;
+}
+
+void Bot::cleanUp() {
+	Logger::detachConsole();
+	delete champion;
+	delete message;
+	champion = NULL;
+	message = NULL;
+	isRunning = false;
+	currentStep = 0;
 }
 
 Bot::~Bot(void)

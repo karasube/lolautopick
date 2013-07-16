@@ -59,15 +59,67 @@ HEIMY_API void keyPress(int vk, BOOL bExtended){
     SendInput(1, &Input, sizeof(Input));
 }
 
+HEIMY_API bool SendText(LPCSTR lpctszText) {
+	std::vector<INPUT> EventQueue;
 
-HEIMY_API void say(char* text, bool send){
+	char Buff[120] = {0};
+	//GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_ILANGUAGE, (LPWSTR) Buff, sizeof(Buff));
+	//HKL hKeyBoardLayout = LoadKeyboardLayout((LPWSTR) Buff, KLF_ACTIVATE);
+
+	const int Len = strlen(lpctszText);
+
+	for(int Index = 0; Index < Len; ++Index) {
+		INPUT Event = {0};
+
+		const SHORT Vk = VkKeyScanEx(lpctszText[Index], NULL);
+		const UINT VKey = MapVirtualKey(LOBYTE(Vk), 0);
+
+		if(HIBYTE(Vk) == 1) {
+			ZeroMemory(&Event, sizeof(Event));
+			Event.type = INPUT_KEYBOARD;
+			Event.ki.dwFlags = KEYEVENTF_SCANCODE;
+			Event.ki.wScan = MapVirtualKey(VK_LSHIFT, 0);
+			EventQueue.push_back(Event);
+		}
+
+		ZeroMemory(&Event, sizeof(Event));
+		Event.type = INPUT_KEYBOARD;
+		Event.ki.dwFlags = KEYEVENTF_SCANCODE;
+		Event.ki.wScan = VKey;
+		EventQueue.push_back(Event);
+
+		ZeroMemory(&Event, sizeof(Event));
+		Event.type = INPUT_KEYBOARD;
+		Event.ki.dwFlags = KEYEVENTF_SCANCODE | KEYEVENTF_KEYUP;
+		Event.ki.wScan = VKey;
+		EventQueue.push_back(Event);
+
+		if(HIBYTE(Vk) == 1) {
+			ZeroMemory(&Event, sizeof(Event));
+			Event.type = INPUT_KEYBOARD;
+			Event.ki.dwFlags = KEYEVENTF_SCANCODE | KEYEVENTF_KEYUP;
+			Event.ki.wScan = MapVirtualKey(VK_LSHIFT, 0);
+			EventQueue.push_back(Event);
+		}
+	}
+	/*if(hKeyBoardLayout) {
+		UnloadKeyboardLayout(hKeyBoardLayout);
+	}*/
+
+	return SendInput(EventQueue.size(), &EventQueue[0], sizeof(INPUT));
+}
+
+HEIMY_API void say(char* &text, bool send){
 	for(int i = 0; i < (int) strlen(text); i++){
 		keyPress(toupper(text[i]), FALSE);
+		Sleep(1);
 	}
 	if(send) {
 		keyPress(0x0D, FALSE);
 	}
 }
+
+HEIMY_API void sayEnter() { keyPress(0x0D, FALSE); }
 
 HEIMY_API void winActivate(HWND hwnd){
 	ShowWindow(hwnd, SW_RESTORE);

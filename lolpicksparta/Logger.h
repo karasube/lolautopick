@@ -15,7 +15,6 @@ class Logger
 public:
 	Logger(void);
 	~Logger(void);
-
 	static void attachConsole();
 	static void detachConsole();
 	static void log(string msg);

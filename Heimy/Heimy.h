@@ -1,4 +1,5 @@
 #include <Windows.h>
+#include <vector>
 #include <string>
 #include "Structs.h"
 // The following ifdef block is the standard way of creating macros which make exporting 
@@ -17,7 +18,9 @@
 HEIMY_API bool searchForPixelColor(HDC dc, TARGETRECT rect, int xInc, int yInc, COLORREF _color, COLORREF _color2, COLORREF _color3);
 HEIMY_API bool checkPixelColor(HDC dc, COLORREF color, POINT pos);
 HEIMY_API void keyPress(int vk, BOOL bExtended);
-HEIMY_API void say(char* text, bool send);
+HEIMY_API void say(char* &text, bool send);
+HEIMY_API bool SendText(LPCSTR lpctszText);
+HEIMY_API void sayEnter();
 HEIMY_API void winActivate(HWND hwnd);
 HEIMY_API void moveMouse(POINT pos);
 HEIMY_API void click();

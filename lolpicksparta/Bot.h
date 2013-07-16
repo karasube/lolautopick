@@ -34,6 +34,7 @@ private:
 	TARGET timer, accept, chat, search, select, tokenScreen, tokenChampion;
 	TARGET _chat;
 	HDC _dc;
+	void cleanUp();
 };
 #endif
 

@@ -77,6 +77,13 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 					break;
 			}
 			break;
+		case WM_KEYUP:
+			switch(wParam) {
+				case VK_TAB:
+					MessageBox(NULL, L"ok", L"ok", NULL);
+				break;
+			}
+			break;
 		case WM_CLOSE:
 			Logger::log("WM_CLOSE message. Hide in the shadow!");
 			DestroyWindow(hwnd);
@@ -90,9 +97,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 }
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
-	Logger::attachConsole();
 	bot = new Bot();
-	Logger::log("Preparing GUI.");
+
 	WNDCLASSEX wc;
 	HWND hwnd;
 	MSG Msg;
@@ -129,12 +135,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		return 0;
 	}
 
-	Logger::log("GUI ready. Showing it.");
 
 	ShowWindow(hwnd, nCmdShow);
 	UpdateWindow(hwnd);
 
-	Logger::log("Waiting for messages.");
 
 	while(GetMessage(&Msg, NULL, 0, 0) > 0)	{
 		TranslateMessage(&Msg);
